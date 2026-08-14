@@ -30,7 +30,7 @@ st.set_page_config(page_title="Dashboard Macro", layout="wide")
 
 # Ruta fija del archivo de datos. Ajusta esta ruta a donde guardes tu parquet
 # (por ejemplo, el resultado de merged_df.to_parquet('Macro paises.parquet')).
-DATA_PATH = "Macro paises.parquet"
+DATA_PATH = "data.parquet"
 
 
 @st.cache_data
