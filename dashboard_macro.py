@@ -5,14 +5,17 @@ Cómo correrlo:
     streamlit run dashboard_macro.py
 
 Requiere:
-    pip install streamlit pandas plotly openpyxl
+    pip install streamlit pandas plotly pyarrow
     # opcional, para la línea de tendencia en el gráfico de dispersión:
     pip install statsmodels
 
-Por defecto lee 'Macro paises.xlsx' (el archivo que ya exportas en tu notebook
-con merged_df.to_excel('Macro paises.xlsx')). Si prefieres leer directo de
-merged_df / los parquet, ajusta la función load_data() más abajo.
+Lee siempre el archivo parquet fijo definido en DATA_PATH más abajo
+(por ejemplo, el que generas en tu notebook con merged_df.to_parquet(...)).
+No hay selector de archivo ni carga desde la interfaz: el dashboard usa
+únicamente esta fuente de datos.
 """
+
+import os
 
 import streamlit as st
 import pandas as pd
@@ -25,31 +28,30 @@ st.set_page_config(page_title="Dashboard Macro", layout="wide")
 # Carga de datos
 # ---------------------------------------------------------------------------
 
+# Ruta fija del archivo de datos. Ajusta esta ruta a donde guardes tu parquet
+# (por ejemplo, el resultado de merged_df.to_parquet('Macro paises.parquet')).
+DATA_PATH = "Macro paises.parquet"
+
+
 @st.cache_data
-def load_data(path: str = "Macro paises.xlsx") -> pd.DataFrame:
-    df = pd.read_excel(path)
-    # por si quedó una columna índice sin nombre al exportar con to_excel()
+def load_data(path: str, mtime: float) -> pd.DataFrame:
+    # `mtime` no se usa dentro de la función, pero forma parte de la llave de
+    # caché: si el archivo cambia de fecha de modificación (se regeneró desde
+    # el notebook), Streamlit invalida el caché automáticamente y recarga.
+    df = pd.read_parquet(path)
     df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
     return df
 
 
-with st.sidebar:
-    st.header("Datos")
-    fuente = st.radio("Origen de datos", ["Archivo Excel", "Subir archivo"])
-    if fuente == "Archivo Excel":
-        ruta = st.text_input("Ruta del archivo", value="Macro paises.xlsx")
-        try:
-            df = load_data(ruta)
-        except FileNotFoundError:
-            st.error(f"No encontré '{ruta}'. Verifica la ruta o sube el archivo.")
-            st.stop()
-    else:
-        archivo = st.file_uploader("Sube el .xlsx", type=["xlsx"])
-        if archivo is None:
-            st.info("Sube un archivo para continuar.")
-            st.stop()
-        df = pd.read_excel(archivo)
-        df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
+if not os.path.isfile(DATA_PATH):
+    st.error(
+        f"No encontré el archivo de datos '{DATA_PATH}'. "
+        "Verifica que exista en la carpeta desde donde corres la app "
+        "(o ajusta la constante DATA_PATH en el script)."
+    )
+    st.stop()
+
+df = load_data(DATA_PATH, os.path.getmtime(DATA_PATH))
 
 indicadores = [c for c in df.columns if c not in ["economy", "time"]]
 paises_disponibles = sorted(df["economy"].dropna().unique())
