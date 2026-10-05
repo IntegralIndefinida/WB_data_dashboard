@@ -5,7 +5,7 @@ An interactive dashboard for exploring macroeconomic, labor-market, and social i
 **Live app:** [https://wbdatadashboard.streamlit.app/](#)
 
 ![Example for Aruba](images/ABW_example.png)
-![Correlation matrix example](images/correlation_matrix)
+![Correlation matrix example](images/correlation_matrix.png)
 
 ## What the project covers
 
