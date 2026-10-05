@@ -2,9 +2,10 @@
 
 An interactive dashboard for exploring macroeconomic, labor-market, and social indicators across World Bank economies. It compares indicator trends over time and includes country maps, latest-value rankings, distributions, multi-indicator profiles, scatter plots, correlations, and filtered data export.
 
-**Live app:** [Add the Streamlit Community Cloud link here](#)
+**Live app:** [https://wbdatadashboard.streamlit.app/](#)
 
-![Selected indicators for Colombia compared with global data](global_vs_col_vuln.png)
+![Example for Aruba](images/ABW_example.png)
+![Correlation matrix example](images/correlation_matrix)
 
 ## What the project covers
 
