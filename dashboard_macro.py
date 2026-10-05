@@ -53,8 +53,55 @@ if not os.path.isfile(DATA_PATH):
 
 df = load_data(DATA_PATH, os.path.getmtime(DATA_PATH))
 
+required_columns = {"economy", "time"}
+missing_columns = required_columns.difference(df.columns)
+if missing_columns:
+    st.error(
+        "El archivo de datos no tiene las columnas requeridas: "
+        + ", ".join(sorted(missing_columns))
+    )
+    st.stop()
+
+if df.empty:
+    st.error("El archivo de datos no contiene observaciones.")
+    st.stop()
+
+if not pd.api.types.is_numeric_dtype(df["time"]):
+    st.error("La columna 'time' debe contener años numéricos.")
+    st.stop()
+
+missing_keys = df[["economy", "time"]].isna().any(axis=1).sum()
+if missing_keys:
+    st.error(
+        f"El archivo contiene {missing_keys:,} filas sin código de economía o año. "
+        "Corrige esas claves antes de abrir el dashboard."
+    )
+    st.stop()
+
+duplicate_keys = df.duplicated(["economy", "time"]).sum()
+if duplicate_keys:
+    st.error(
+        f"El archivo contiene {duplicate_keys:,} filas duplicadas por economía y año. "
+        "Se requiere una sola fila por combinación."
+    )
+    st.stop()
+
 indicadores = [c for c in df.columns if c not in ["economy", "time"]]
+if not indicadores:
+    st.error("El archivo no contiene indicadores para mostrar.")
+    st.stop()
+
+no_numericos = [c for c in indicadores if not pd.api.types.is_numeric_dtype(df[c])]
+if no_numericos:
+    st.error(
+        "Estos indicadores deben ser numéricos: " + ", ".join(no_numericos)
+    )
+    st.stop()
+
 paises_disponibles = sorted(df["economy"].dropna().unique())
+if not paises_disponibles:
+    st.error("El archivo no contiene códigos de economías válidos.")
+    st.stop()
 
 # ---------------------------------------------------------------------------
 # Controles (selector de países en el dashboard)
@@ -63,7 +110,10 @@ paises_disponibles = sorted(df["economy"].dropna().unique())
 with st.sidebar:
     st.header("Filtros")
 
-    paises_default = paises_disponibles[:5] if len(paises_disponibles) >= 5 else paises_disponibles
+    comparables = ["COL", "BRA", "CHL", "MEX", "PER"]
+    paises_default = [p for p in comparables if p in paises_disponibles]
+    if not paises_default:
+        paises_default = paises_disponibles[: min(5, len(paises_disponibles))]
     paises_sel = st.multiselect(
         "Países a comparar",
         options=paises_disponibles,
@@ -94,6 +144,10 @@ df_f = df[
 
 st.title("📊 Dashboard Macroeconómico")
 st.caption(f"Comparando {len(paises_sel)} país(es) — {rango_anios[0]}–{rango_anios[1]}")
+st.caption(
+    "Los códigos incluyen países y agregados regionales. La disponibilidad de datos "
+    "varía por indicador; el último año observado puede diferir entre economías."
+)
 
 # --- Fila 1: serie de tiempo comparativa del indicador principal ---
 st.subheader(f"Evolución de {indicador_sel}")

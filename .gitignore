@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter-generated files
+.ipynb_checkpoints/
+
+# Local exports and secrets
+BM.xlsx
+.streamlit/secrets.toml
